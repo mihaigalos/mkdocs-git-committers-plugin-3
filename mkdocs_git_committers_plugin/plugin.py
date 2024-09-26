@@ -63,7 +63,7 @@ class GitCommittersPlugin(BasePlugin):
                 seen_committers.append( c.author.login )
                 unique_committers.append({
                     "name": c.author.name,
-                    "login": c.author.login,
+                    "login": c.author.name,
                     "url": f"https://{self.config['enterprise_hostname'] or 'github.com'}/{c.author.login}",
                     "avatar": c.author.avatar_url,
                     "last_commit": c.author.avatar_url,
@@ -99,7 +99,7 @@ class GitCommittersPlugin(BasePlugin):
                         seen = True
                 if seen:
                     continue
-                try: 
+                try:
                     c = self.get_github_user( u )
                     committers.append( c )
                 except:
