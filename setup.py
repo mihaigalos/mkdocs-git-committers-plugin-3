@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 
 setup(
-    name='mkdocs-git-committers-plugin',
+    name='mkdocs-git-committers-plugin-3',
     version='0.2.3',
     description='An MkDocs plugin to create a list of contributors on the page',
     long_description='The git-committers plugin will seed the template context with a list of github committers',
@@ -31,7 +31,7 @@ setup(
     packages=find_packages(),
     entry_points={
         'mkdocs.plugins': [
-            'git-committers = mkdocs_git_committers_plugin.plugin:GitCommittersPlugin'
+            'git-committers-3 = mkdocs_git_committers_plugin.plugin:GitCommittersPlugin'
         ]
     }
 )
