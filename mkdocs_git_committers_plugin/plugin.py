@@ -1,6 +1,8 @@
-import os
-import sys
 import logging
+import os
+import subprocess
+import sys
+
 from pprint import pprint
 from timeit import default_timer as timer
 from datetime import datetime, timedelta
@@ -55,21 +57,37 @@ class GitCommittersPlugin(BasePlugin):
             return None
 
     def get_committers(self, path):
-        seen_committers = []
+        result = subprocess.check_output(['git', 'log', '--follow', '--format=%aN <%aE>', '--', path], text=True)
+        names = set(line.split('<')[0].rstrip() for line in result.strip().splitlines())
         unique_committers = []
-        commits = self.repo.get_commits( path=path, sha=self.branch )
-        for c in commits:
-            if c.author is not None and c.author.login is not None and c.author.login not in seen_committers:
-                seen_committers.append( c.author.login )
-                unique_committers.append({
-                    "name": c.author.name,
-                    "login": c.author.name,
-                    "url": f"https://{self.config['enterprise_hostname'] or 'github.com'}/{c.author.login}",
-                    "avatar": c.author.avatar_url,
-                    "last_commit": c.author.avatar_url,
-                    "repos": f"https://{self.config['enterprise_hostname'] or 'github.com'}/{c.author.login}"
-                })
-        return unique_committers
+        for name in names:
+            committer_info = self.get_user_info_by_name(name)
+            if committer_info and all(committer['avatar'] != committer_info['avatar'] for committer in unique_committers):
+                unique_committers.append(committer_info)
+        return [committer for committer in unique_committers if committer]
+
+    def get_user_info_by_name(self, name):
+        users = self.github.search_users(name+" in:users")
+        for user in users:
+            return self.construct_committer_info(user)
+        return None
+
+    def construct_committer_info(self, user):
+        return {
+            "name": user.name,
+            "login": user.name,
+            "url": user.html_url,
+            "avatar": user.avatar_url,
+            "last_commit": self.get_last_commit(user.login),
+            "repos": user.html_url
+        }
+
+    def get_last_commit(self, login):
+        commits = self.repo.get_commits(author=login)
+        last_commit = None
+        if commits.totalCount > 0:
+            last_commit = commits[0].html_url
+        return last_commit
 
     def get_github_user(self, username):
         user = self.github.get_user( username )
@@ -90,6 +108,9 @@ class GitCommittersPlugin(BasePlugin):
         start = timer()
         git_path = self.config['docs_path'] + page.file.src_path
         committers = self.get_committers(git_path)
+        names = ', '.join([e['name'] for e in committers])
+
+        LOG.info(f"Looking up contributors for path: {git_path}   -   {names}")
         if 'contributors' in page.meta:
             users = page.meta['contributors'].split(',')
             seen = False
