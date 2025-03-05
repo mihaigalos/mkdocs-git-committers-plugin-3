@@ -72,7 +72,10 @@ class GitCommittersPlugin(BasePlugin):
             if committer_info and all(committer['avatar'] != committer_info['avatar'] for committer in unique_committers):
                 unique_committers.append(committer_info)
         result = [committer for committer in unique_committers if committer]
-        names = ', '.join([e['name'] for e in result])
+        if result is not None:
+            names = ', '.join([e['name'] for e in result])
+        else:
+            names = "(Unknown)"
 
         LOG.info(f"Looked up contributors for path: {path}   -   {names}")
         return result
