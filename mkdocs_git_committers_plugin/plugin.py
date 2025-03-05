@@ -71,11 +71,11 @@ class GitCommittersPlugin(BasePlugin):
             committer_info = self.get_user_info_by_name(name)
             if committer_info and all(committer['avatar'] != committer_info['avatar'] for committer in unique_committers):
                 unique_committers.append(committer_info)
-        result = [committer for committer in unique_committers if committer]
+        result = [committer for committer in unique_committers if committer and committer["name"] is not None]
         if result is not None:
             names = ', '.join([e['name'] for e in result])
         else:
-            names = "(Unknown)"
+            names = ""
 
         LOG.info(f"Looked up contributors for path: {path}   -   {names}")
         return result
@@ -122,7 +122,10 @@ class GitCommittersPlugin(BasePlugin):
         start = timer()
         git_path = self.config['docs_path'] + page.file.src_path
         committers = self.get_committers(git_path)
-        names = ', '.join([e['name'] for e in committers])
+        if committers is not None:
+            names = ', '.join([e['name'] for e in committers])
+        else:
+            names=""
 
         if 'contributors' in page.meta:
             users = page.meta['contributors'].split(',')
